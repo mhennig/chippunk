@@ -1,125 +1,23 @@
+$:.unshift(File.dirname(__FILE__)) unless
+  $:.include?(File.dirname(__FILE__)) || $:.include?(File.expand_path(File.dirname(__FILE__)))
+
 require "rubygems"
 require "gosu"
+#require 'chipmunk-ffi'
 require 'chipmunk'
 
-module Chippunk
-  
-  module Helper
-    
-    module Shapes
-      def circle_shape()
-        
-      end
-    end
-    
-    module Objects
-      
-      def circle(size, mass=0, inertia=0, offset=[0,0], &block)
-        obj = Chippunk::Object.new
-        obj.shape = CP::Shape::Circle.new(obj.body(mass, inertia), size/2, CP::Vec2.new(0,0))
-        yield(obj) if block_given?
-        obj
-      end
-      
-    end
+require 'chippunk/helper.rb'
+require 'chippunk/world.rb'
+require 'chippunk/object.rb'
+require 'chippunk/builder.rb'
+
+class Numeric
+  def radians_to_vec2
+    CP::Vec2.new(Math::cos(self), Math::sin(self))
   end
-  
-  class World
-    attr_reader :space, :objects
-    
-    def initialize
-      @space = CP::Space.new
-      @objects = []
-    end
-    
-    def method_missing(method, *args, &block)
-      @space.send(method, *args, &block)
-    end
-    
-    def add_object(obj)
-      @space.add_shape(obj.shape)
-      @space.add_body(obj.shape.body) unless obj.static?
-      @objects << obj
-    end
-    
-    def add_objects(*objects)
-      objects.each{ |obj| self.add_object(obj) }
-    end
-    
-    def draw(canvas)
-      @objects.each{ |obj| obj.draw(canvas) }
-    end
-    
-  end
-  
-  class Object
-    attr :body
-    attr_reader :shape, :view
-    
-    def initialize(*args)
-      super
-      @is_static = false
-    end
-    
-    def shape=(shape)
-      @shape ||= shape
-    end
-    
-    def body(mass=0, inertia=0)
-      @body ||= CP::Body.new(mass, inertia)
-    end
-    
-    def position=(pos)
-      x, y = pos.values_at(0, 1)
-      body.pos = CP::Vec2.new(x.to_f,y.to_f)
-    end
-    
-    def mass=(m)
-      body.mass = m
-    end
-    
-    def inertia=(i)
-      body.i = 0
-    end
-    
-    def velocity=(x_direction, y_direction)
-      body.vel = CP::Vec2(x_direction, y_direction)
-    end
-    
-    def elasticity=(e)
-      shape.e = e
-    end
-    
-    def friction=(u)
-      shape.u = u
-    end
-    
-    def collision_type=(type)
-      shape.collision_type = type.to_sym
-    end
-    
-    def static?
-      @is_static
-    end
-    
-    def draw(canvas)
-      unless view.respond_to?(:draw)
-        @shape.draw(canvas)
-      end
-    end
-  end
-  
-  class StaticObject < Chippunk::Object
-    def initialize(*args)
-      super
-      @is_static = true
-    end
-  end
-  
 end
 
 module CP
-    
   module Shape
     
     class Segment
@@ -174,6 +72,12 @@ module CP
       end
       
       def draw(canvas)
+        ary = verts.map {|v| body.p + self.offset + v.rotate(body.rot)}
+        puts body.rot
+        segs = ary.enum_cons(2).to_a << [ary[-1],ary[0]]
+        segs.each do |v1,v2|
+          canvas.draw_line(v1.x,v1.y,Gosu::red,v2.x,v2.y,Gosu::red)
+        end
       end
     end
   end

@@ -1,74 +1,89 @@
 $:.unshift(File.dirname(__FILE__)) unless
   $:.include?(File.dirname(__FILE__)) || $:.include?(File.expand_path(File.dirname(__FILE__)))
 
-
 require "../lib/chippunk"
 
-class BaseLine < Chippunk::StaticObject
-  
-  def initialize
-    super
-    @size, @width, @height = 50, 50, 50 
-    @body = CP::Body.new(CP::INFINITY,CP::INFINITY)
-    @body.pos = CP::Vec2.new(1024/2, 740)
-    @shape = CP::Shape::Segment.new(@body, CP::Vec2.new(-500,0), CP::Vec2.new(500,0), 0.0)
-    #@shape = CP::Shape::Poly.new(@body, [CP::Vec2.new(-25.0, -25.0), CP::Vec2.new(-25.0, 25.0), CP::Vec2.new(25.0, 1.0), CP::Vec2.new(25.0, -1.0)], CP::Vec2.new(0,0))
-    @shape.e = 1
-    @shape.u = 1
-    @shape.collision_type = :floor
-  end
-end
-
-class Entity < Chippunk::Object
-  
-  def initialize
-    super
-    @size, @width, @height = 50, 50, 50 
-    @body = CP::Body.new(10.0,CP::INFINITY)
-    @body.pos = CP::Vec2.new(500,0)
-    @body.vel = CP::Vec2.new(0,0)
-    @shape = CP::Shape::Circle.new(@body, @size / 2, CP::Vec2.new(0,0))
-    @shape.e = 0.5
-    @shape.u = 0.8
-    @shape.collision_type = :ball
-  end
+module Dimensions
+  Mothership = [
+      [-30.0, 60.0],
+      [30, 60.0],
+      [30, -60],
+      [-30, -60]
+  ]
 end
 
 class Game < Gosu::Window 
   
-  include Chippunk::Helper::Objects
+  include Chippunk::Builder
   
   def initialize
     super(1024, 768, false)
     self.caption = "WORLD!!"
+  
+    @world = Chippunk::World.new do |config|
+      config.gravity = CP::Vec2.new(0.0, 1800.0)
+      config.damping = 0.3
+      config.iterations = 20
+      config.substeps = 20
+      config.dt = (1.0/60) / 20
+    end
     
-    @world = Chippunk::World.new
-    @world.gravity = CP::Vec2.new(0, 0.1)
+    ground = build_segment_object(1024, CP::INFINITY, CP::INFINITY) do |config|
+      config.position = [1024/2, 760]
+      config.friction = 0.9
+      config.static!
+    end
     
-    @base_line = BaseLine.new
-    @entity = Entity.new
+    @ship = build_polygon_object(Dimensions::Mothership, 10, 900) do |ship|
+      ship.position = [600 + rand(300), 10 + rand(30)]
+      ship.elasticity = 0.5
+      ship.friction = 0.3
+    end
     
-    balls = Array.new(10) do |n|
-      circle(rand(20)+5, rand(30)+5, 300) do |ball|
-        ball.position = [300+10*n, 10]
-        ball.elasticity = 0.5
+    balls = Array.new(50) do |n|
+      build_circle_object(rand(30)+10, rand(3)+1, 0.4) do |ball|
+        ball.position = [200+rand(400), 10 + rand(10)]
+        ball.elasticity = 0.9
+        ball.friction = 0.1
       end
     end
-    @world.add_objects(@base_line, @entity, *balls)
+    
+    @world.add_objects(@ship)
+    @world.add_objects(*balls)
+    @world.add_objects(ground)
   end
-  
-  def centerx
-    0
-  end
-  
-  def centery
-    0
-  end
-  
+    
   def update
-    @world.step(1)
+    @world.update do 
+      @ship.body.reset_forces
+      @ship.body.apply_force(vec2(0, -18000), vec2(0,0))
+      if self.button_down?(Gosu::KbUp)
+        @ship.body.apply_force(vec2(0, -10000), vec2(0,0))
+        puts "btn down"
+      end
+      if self.button_down?(Gosu::KbDown)
+        @ship.body.apply_force(vec2(0, 9000), vec2(0,0))
+      end
+      if self.button_down?(Gosu::KbLeft)
+        @ship.body.apply_force(vec2(-9000,0), vec2(0,0))
+      end
+      if self.button_down?(Gosu::KbRight)
+        @ship.body.apply_force(vec2(9000,0), vec2(0,0))
+      end
+      
+      puts @ship.body.vel
+    end
   end
-  
+
+  def button_down(id)
+    case id
+    when Gosu::KbEscape
+      close
+    when Gosu::KbUp
+      #@ship.body.apply_force(vec2(0, -10), vec2(0,0))
+    end
+  end
+
   def draw
     self.draw_quad(0, 0, Gosu::Color.new(0xff002040), 1024, 0, Gosu::Color.new(0xff002040), 0, 768, Gosu::Color.new(0xff002040), 1024, 768, Gosu::Color.new(0xff002040), 0)
     @world.draw(self)
