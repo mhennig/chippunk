@@ -11,6 +11,12 @@ require 'chippunk/world.rb'
 require 'chippunk/object.rb'
 require 'chippunk/builder.rb'
 
+unless [].respond_to?(:enum_cons)
+  module Enumerable
+    alias :enum_cons :each_cons
+  end
+end
+
 class Numeric
   def radians_to_vec2
     CP::Vec2.new(Math::cos(self), Math::sin(self))
