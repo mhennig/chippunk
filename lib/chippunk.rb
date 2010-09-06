@@ -38,7 +38,7 @@ module CP
       def draw(canvas)
         v1 = body.p + self.a.rotate(body.rot)
         v2 = body.p + self.b.rotate(body.rot)
-        canvas.draw_line(v1.x, v1.y, Gosu::red, v2.x, v2.y, Gosu::red)
+        canvas.draw_line(v1.x, v1.y, Gosu::Color.new(0xffff0000), v2.x, v2.y, Gosu::Color.new(0xffff0000))
       end
     end
     
@@ -54,7 +54,7 @@ module CP
       def draw(canvas)
         c = body.p + self.center.rotate(body.rot)
         a = body.a
-        segs = 16
+        segs = 20
         coef = 2.0*Math::PI/(segs.to_f)
         
         points = Array.new(segs) do |n|
@@ -62,8 +62,8 @@ module CP
           [radius*Math.cos(rads+a) + c.x, radius*Math.sin(rads + a) + c.y]
         end
         
-        points.each_cons(2) do |v1,v2|
-          canvas.draw_line(v1[0], v1[1], Gosu::red, v2[0], v2[1], Gosu::red)
+        points.enum_cons(2) do |v1,v2|
+          canvas.draw_line(v1[0], v1[1], Gosu::Color.new(0xffff0000), v2[0], v2[1], Gosu::Color.new(0xffff0000))
         end
       end
     end
@@ -82,7 +82,7 @@ module CP
         puts body.rot
         segs = ary.enum_cons(2).to_a << [ary[-1],ary[0]]
         segs.each do |v1,v2|
-          canvas.draw_line(v1.x,v1.y,Gosu::red,v2.x,v2.y,Gosu::red)
+          canvas.draw_line(v1.x,v1.y,Gosu::Color.new(0xffff0000),v2.x,v2.y,Gosu::Color.new(0xffff0000))
         end
       end
     end
