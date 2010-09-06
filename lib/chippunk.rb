@@ -79,7 +79,6 @@ module CP
       
       def draw(canvas)
         ary = verts.map {|v| body.p + self.offset + v.rotate(body.rot)}
-        puts body.rot
         segs = ary.enum_cons(2).to_a << [ary[-1],ary[0]]
         segs.each do |v1,v2|
           canvas.draw_line(v1.x,v1.y,Gosu::Color.new(0xffff0000),v2.x,v2.y,Gosu::Color.new(0xffff0000))

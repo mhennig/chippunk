@@ -14,6 +14,8 @@ module Chippunk
     end
 
     def add_object(obj)
+      obj.world = self
+      obj.shape.obj = obj
       @space.add_shape(obj.shape)
       @space.add_body(obj.shape.body) unless obj.static?
       @objects << obj
@@ -25,6 +27,7 @@ module Chippunk
     
     def update(&block)
       @substeps.times do
+        @objects.each{ |o| o.body.reset_forces }
         yield(self) if block_given?
         @space.step(@dt)
       end

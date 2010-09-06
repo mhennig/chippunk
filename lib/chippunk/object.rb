@@ -1,7 +1,10 @@
 module Chippunk
   class Object
+    include Chippunk::Helper
+    
     attr :body
     attr_reader :shape, :view
+    attr_accessor :world
     
     def initialize(*args)
       super
@@ -18,6 +21,8 @@ module Chippunk
     
     def position=(coords)
       x, y = coords.values_at(0, 1)
+      puts x, y
+      
       body.pos = CP::Vec2.new(x.to_f,y.to_f)
     end
     
@@ -33,8 +38,9 @@ module Chippunk
       body.i = 0
     end
     
-    def velocity=(x_direction, y_direction)
-      body.vel = CP::Vec2(x_direction, y_direction)
+    def velocity=(v)
+      x_direction, y_direction = v.values_at(0,1)
+      body.vel = vec2(x_direction, y_direction)
     end
     
     def elasticity=(e)
@@ -61,6 +67,7 @@ module Chippunk
       unless view.respond_to?(:draw)
         @shape.draw(canvas)
       end
+      
     end
   end
   
